@@ -83,10 +83,10 @@ yaml_load <- function(path = NULL) {
   }
   yearsDef <- names(all)
   yearsDef |> purrr::walk(function(y) {
-    daysDef <- names(all[y])
+    daysDef <- names(all[[y]])
     daysDef |> purrr::walk(function(d) {
-      all[y][d]$holidays |> purrr::walk(holiday_assign)
-      all[y][d]$workdays |> purrr::walk(workday_assign)
+      all[[y]][[d]]$holidays |> purrr::walk(holiday_assign)
+      all[[y]][[d]]$workdays |> purrr::walk(workday_assign)
     })
   })
 }
