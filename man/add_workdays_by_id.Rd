@@ -4,7 +4,15 @@
 \alias{add_workdays_by_id}
 \title{计算时间段内包含的工作日数量，按照ID合并}
 \usage{
-add_workdays_by_id(d, from, to, idName, newName = "工作日数")
+add_workdays_by_id(
+  d,
+  from,
+  to,
+  idName,
+  newName = "工作日数",
+  path = NULL,
+  withSeq = FALSE
+)
 }
 \arguments{
 \item{d}{要补充字段的数据集}

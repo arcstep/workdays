@@ -23,8 +23,8 @@ test_that("计算工作日时，根据ID合并工作日数", {
     "2023-1-11", "2023-1-21", 4) |>
     tidyr::unnest(z)
   resp <- add_workdays_by_id(d, "x", "y", id = "z")
-  resp$工作日数[[1]] |> testthat::expect_equal(resp$工作日数[[3]])
-  resp$工作日数[[2]] |> testthat::expect_equal(resp$工作日数[[4]])
+  resp$工作日数[[1]] |> testthat::expect_equal(resp$工作日数[[2]])
+  resp$工作日数[[3]] |> testthat::expect_equal(resp$工作日数[[4]])
 })
 
 
