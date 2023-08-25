@@ -4,7 +4,7 @@
 #' @param toColumn 截止日期字段名
 #' @param newName 工作日字段命名
 #' @export
-add_workdays <- function(d, from, to, newName = "工作日数") {
+add_workdays <- function(d, from, to, newName = "工作日数", id = NULL) {
   stopifnot("data.frame" %in% class(d))
   ## 构造需要处理的数据集
   d0 <- d |>
@@ -19,9 +19,9 @@ add_workdays <- function(d, from, to, newName = "工作日数") {
     toDay = ds$`@to` |> purrr::discard(~ is.na(.x)) |> max())
   ## 生成日期序列数据集
   ds0 <- ds |>
-    dplyr::left_join(wd |> select(日期, 累计工作日数), by = c("@from"="日期")) |>
+    left_join(wd |> select(日期, 累计工作日数), by = c("@from"="日期")) |>
     rename(`@seq_from` = 累计工作日数) |>
-    dplyr::left_join(wd |> select(日期, 累计工作日数), by = c("@to"="日期")) |>
+    left_join(wd |> select(日期, 累计工作日数), by = c("@to"="日期")) |>
     rename(`@seq_to` = 累计工作日数) |>
     mutate(`@workdays` = purrr::map2(
       `@seq_from`,
@@ -39,8 +39,30 @@ add_workdays <- function(d, from, to, newName = "工作日数") {
   y_by <- "@to"
   names(x_by) <- from
   names(y_by) <- to
-  d0 |>
-    left_join(ds0 |> select(`@from`, `@to`, !!sym(newName)), by = c("@from", "@to")) |>
+  resp <- d0 |>
+    left_join(ds0 |> select(`@from`, `@to`, `@workdays`, !!dplyr::sym(newName)), by = c("@from", "@to")) |>
     select(-`@from`, -`@to`)
   ##
+  if(is.null(id)) {
+    resp |> select(-`@workdays`)
+  } else {
+    resp[["@id"]] <- resp[[id]]
+    respNest <- resp |> 
+      add_count(`@id`, name = "@n") |>
+      mutate(`@n` = as.integer(`@n`)) |>
+      filter(`@n` > 1) |>
+      nest_by(`@id`, .key = "mydata") |>
+      ungroup()
+    respCount <- tibble(`@id` = respNest$`@id`)
+    respCount[[newName]] <- respNest$mydata |>
+      purrr::map_int(~ .x$`@workdays` |> purrr::map(~ .x$工作日序列) |> unlist() |> unique() |> length())
+    resp |>
+      select(-!!dplyr::sym(newName)) |>
+      left_join(
+        rbind(
+          respCount,
+          resp |> select(`@id`, {{newName}}) |> anti_join(respCount, by = "@id")),
+        by = "@id") |>
+      select(-`@workdays`, -`@id`)
+  }
 }
