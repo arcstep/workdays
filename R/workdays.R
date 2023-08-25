@@ -1,10 +1,5 @@
-#' @title 计算时间段内包含的工作日数量
-#' @param d 要补充字段的数据集
-#' @param fromColumn 开始日期字段名
-#' @param toColumn 截止日期字段名
-#' @param newName 工作日字段命名
-#' @export
-add_workdays <- function(d, from, to, newName = "工作日数", id = NULL) {
+##
+add_workdays0 <- function(d, from, to, newName = "工作日数") {
   stopifnot("data.frame" %in% class(d))
   ## 构造需要处理的数据集
   d0 <- d |>
@@ -39,30 +34,45 @@ add_workdays <- function(d, from, to, newName = "工作日数", id = NULL) {
   y_by <- "@to"
   names(x_by) <- from
   names(y_by) <- to
-  resp <- d0 |>
+  d0 |>
     left_join(ds0 |> select(`@from`, `@to`, `@workdays`, !!dplyr::sym(newName)), by = c("@from", "@to")) |>
     select(-`@from`, -`@to`)
-  ##
-  if(is.null(id)) {
-    resp |> select(-`@workdays`)
-  } else {
-    resp[["@id"]] <- resp[[id]]
-    respNest <- resp |> 
-      add_count(`@id`, name = "@n") |>
-      mutate(`@n` = as.integer(`@n`)) |>
-      filter(`@n` > 1) |>
-      nest_by(`@id`, .key = "mydata") |>
-      ungroup()
-    respCount <- tibble(`@id` = respNest$`@id`)
-    respCount[[newName]] <- respNest$mydata |>
-      purrr::map_int(~ .x$`@workdays` |> purrr::map(~ .x$工作日序列) |> unlist() |> unique() |> length())
-    resp |>
-      select(-!!dplyr::sym(newName)) |>
-      left_join(
-        rbind(
-          respCount,
-          resp |> select(`@id`, {{newName}}) |> anti_join(respCount, by = "@id")),
-        by = "@id") |>
-      select(-`@workdays`, -`@id`)
-  }
+}
+
+
+#' @title 计算时间段内包含的工作日数量
+#' @param d 要补充字段的数据集
+#' @param fromColumn 开始日期字段名
+#' @param toColumn 截止日期字段名
+#' @param newName 工作日字段命名
+#' @export
+add_workdays <- function(d, from, to, newName = "工作日数") {
+  add_workdays0(d, from, to, newName) |>
+    select(-`@workdays`)
+}
+
+#' @title 计算时间段内包含的工作日数量，按照ID合并
+#' @param d 要补充字段的数据集
+#' @param fromColumn 开始日期字段名
+#' @param toColumn 截止日期字段名
+#' @param newName 工作日字段命名
+#' @param idName 合并工作日依据的ID字段名称
+#' @export
+add_workdays_by_id <- function(d, from, to, idName, newName = "工作日数") {
+  resp <- add_workdays0(d, from, to, newName)
+  resp[["@id"]] <- resp[[idName]]
+  respNest <- resp |> 
+    add_count(`@id`, name = "@n") |>
+    mutate(`@n` = as.integer(`@n`)) |>
+    filter(`@n` > 1) |>
+    nest_by(`@id`, .key = "mydata") |>
+    ungroup()
+  respCount <- tibble(`@id` = respNest$`@id`)
+  respCount[[newName]] <- respNest$mydata |>
+    purrr::map_int(~ .x$`@workdays` |> purrr::map(~ .x$工作日序列) |> unlist() |> unique() |> length())
+  respById <- rbind(
+    respCount,
+    resp |> select(`@id`, {{newName}}) |> anti_join(respCount, by = "@id"))
+  respById[[idName]] <- respById[["@id"]]
+  respById |> select(-`@id`)
 }
