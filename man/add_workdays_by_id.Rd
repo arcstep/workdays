@@ -11,19 +11,29 @@ add_workdays_by_id(
   idName,
   newName = "工作日数",
   path = NULL,
+  ignoreFrom = FALSE,
+  ignoreTo = FALSE,
   withSeq = FALSE
 )
 }
 \arguments{
 \item{d}{要补充字段的数据集}
 
+\item{from}{开始日期字段名}
+
+\item{to}{截止日期字段名}
+
 \item{idName}{合并工作日依据的ID字段名称}
 
 \item{newName}{工作日字段命名}
 
-\item{fromColumn}{开始日期字段名}
+\item{path}{指定节假日设定文件}
 
-\item{toColumn}{截止日期字段名}
+\item{ignoreFrom}{计算工作日时忽略开始列}
+
+\item{ignoreTo}{计算工作日时忽略结束列}
+
+\item{withSeq}{返回工作日的标记序列，以便后续计算}
 }
 \description{
 计算时间段内包含的工作日数量，按照ID合并
