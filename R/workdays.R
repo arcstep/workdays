@@ -13,24 +13,23 @@ distinct0 <- function(d, columns) {
 #' @param idColumn 合并工作日依据的ID字段名称
 #' @param fromIgnore 计算工作日时忽略开始列
 #' @param toIgnore 计算工作日时忽略结束列
-#' @param path 指定节假日设定文件
 #' @export
-workdays_seq <- function(d, fromColumn, toColumn, idColumn, fromIgnore = TRUE, toIgnore = TRUE, path = NULL) {
+workdays_seq <- function(d, fromColumn, toColumn, idColumn, fromIgnore = TRUE, toIgnore = TRUE) {
   d0 <- d |>
     mutate(`@from` = lubridate::as_date(!!dplyr::sym(fromColumn))) |>
     mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn))) |>
     filter(!is.na(`@from`) & !is.na(`@to`))
   withIdFromTo <-  d0 |> distinct0(c("@from", "@to", idColumn))
-  workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore, path) |>
+  workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore) |>
     right_join(withIdFromTo, by = c("@from", "@to"))
 }
 
 ##
-workdays_seq0 <- function(d, fromColumn, toColumn, fromIgnore = TRUE, toIgnore = TRUE, path = NULL) {
+workdays_seq0 <- function(d, fromColumn, toColumn, fromIgnore = TRUE, toIgnore = TRUE) {
   ##
   fromDay <- (d |> arrange(`@from`))$`@from`[[1]]
   toDay <- (d |> arrange(desc(`@to`)))$`@to`[[1]]
-  wd <- workdays_zh_CN(fromDay, toDay, path) |> filter(工作日标记)
+  wd <- workdays_zh_CN(fromDay, toDay) |> filter(工作日标记)
   resp <- d |>
     distinct(`@from`, `@to`) |>
     mutate(`@seq` = purrr::map2(`@from`, `@to`, ~ .x:.y |> lubridate::as_date())) |>
@@ -48,19 +47,20 @@ workdays_seq0 <- function(d, fromColumn, toColumn, fromIgnore = TRUE, toIgnore =
 
 #' @title 计算时间段内包含的工作日数量
 #' @description
-#' 支持按照ID字段合并
+#' 支持按照ID字段合并。
 #' 
 #' @param d 要处理的数据集
 #' @param fromColumn 开始日期字段名
 #' @param toColumn 截止日期字段名
 #' @param idColumn 合并工作日依据的ID字段名称
+#' @param seqIgnore 需要剔除的工作日序列
 #' @param newName 工作日字段命名
 #' @param fromIgnore 计算工作日时忽略开始列
 #' @param toIgnore 计算工作日时忽略结束列
-#' @param path 指定节假日设定文件
+#' @param withRaw 跳过对 d 参数的预处理步骤，以便进一步优化性能
 #' @export
 workdays_count <- function(d, fromColumn, toColumn, idColumn = NULL, seqIgnore = NULL, newName = "工作日数",
-                           fromIgnore = FALSE, toIgnore = FALSE, path = NULL, withRaw = FALSE) {
+                           fromIgnore = FALSE, toIgnore = FALSE, withRaw = FALSE) {
   if(withRaw) {
     d0 <- d
   } else {
@@ -73,7 +73,7 @@ workdays_count <- function(d, fromColumn, toColumn, idColumn = NULL, seqIgnore =
   if(is.null(idColumn)) {
     resp <- d0 |>
       left_join(
-        workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore, path) |>
+        workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore) |>
           count(`@from`, `@to`, name = "@n"),
         by = c("@from", "@to")) |>
       select(-`@from`, -`@to`)

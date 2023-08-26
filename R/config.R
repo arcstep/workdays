@@ -72,10 +72,14 @@ yaml_write <- function(path = "./") {
   holidaysDefine() |> yaml::write_yaml(path)
 }
 
-#' @title 加载节假日定义
+#' @title 补充节假日定义
+#' @description
+#' 更多节假日定义可以使用该函数补充。
+#' 
+#' 使用该函数不会影响默认或已补充过的节假日定义。
 #' 
 #' @export
-yaml_load <- function(path = NULL) {
+yaml_patch <- function(path = NULL) {
   if(is.null(path)) {
     all <- yaml_list()
   } else {
@@ -89,11 +93,15 @@ yaml_load <- function(path = NULL) {
       all[[y]][[d]]$workdays |> purrr::walk(workday_assign)
     })
   })
+  message(
+    "Workdays Define: ",
+    "Min ", lubridate::as_date(workdays.Env$holidays |> min()),
+    ", ",
+    "Max ", lubridate::as_date(workdays.Env$holidays |> max()))
 }
 
 ## 读取默认的节假日定义
-workdays_zh_CN_marker <- function(fromDay, toDay, path) {
-  yaml_load(path)
+workdays_zh_CN_marker <- function(fromDay, toDay) {
   ## 生成全年的时间序列
   days <- lubridate::as_date(fromDay):lubridate::as_date(toDay) |> lubridate::as_date()
   ## 生成全年的工作日标记序列
@@ -116,7 +124,7 @@ workdays_zh_CN_marker <- function(fromDay, toDay, path) {
 #' @param toDay 截止日期
 #' @family workday-funcs
 #' @export
-workdays_zh_CN <- function(fromDay = "2023-01-01", toDay = "2023-12-31", path = NULL) {
-  workdays_zh_CN_marker(fromDay, toDay, path) |>
+workdays_zh_CN <- function(fromDay = "2023-01-01", toDay = "2023-12-31") {
+  workdays_zh_CN_marker(fromDay, toDay) |>
     rename(日期 = day, 工作日标记 = workday)
 }

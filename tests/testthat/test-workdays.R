@@ -11,6 +11,8 @@ test_that("普通情况", {
     tidyr::unnest(z)
   resp <- workdays_count(d, "x", "y", fromIgnore = T, toIgnore = F)
   resp$工作日数 |> testthat::expect_equal(c(6, 3, 6, 7))
+  resp <- workdays_count(d, "x", "y", fromIgnore = F, toIgnore = F)
+  resp$工作日数 |> testthat::expect_equal(c(6, 4, 6, 8))
 })
 
 test_that("根据ID合并工作日数", {

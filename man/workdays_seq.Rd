@@ -10,8 +10,7 @@ workdays_seq(
   toColumn,
   idColumn,
   fromIgnore = TRUE,
-  toIgnore = TRUE,
-  path = NULL
+  toIgnore = TRUE
 )
 }
 \arguments{
@@ -26,8 +25,6 @@ workdays_seq(
 \item{fromIgnore}{计算工作日时忽略开始列}
 
 \item{toIgnore}{计算工作日时忽略结束列}
-
-\item{path}{指定节假日设定文件}
 }
 \description{
 如果需要按照ID排除工作日数量，则要求调用该函数。

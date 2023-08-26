@@ -4,7 +4,7 @@
 \alias{workdays_zh_CN}
 \title{工作日清单}
 \usage{
-workdays_zh_CN(fromDay = "2023-01-01", toDay = "2023-12-31", path = NULL)
+workdays_zh_CN(fromDay = "2023-01-01", toDay = "2023-12-31")
 }
 \arguments{
 \item{fromDay}{开始日期}

@@ -13,7 +13,6 @@ workdays_count(
   newName = "工作日数",
   fromIgnore = FALSE,
   toIgnore = FALSE,
-  path = NULL,
   withRaw = FALSE
 )
 }
@@ -26,14 +25,16 @@ workdays_count(
 
 \item{idColumn}{合并工作日依据的ID字段名称}
 
+\item{seqIgnore}{需要剔除的工作日序列}
+
 \item{newName}{工作日字段命名}
 
 \item{fromIgnore}{计算工作日时忽略开始列}
 
 \item{toIgnore}{计算工作日时忽略结束列}
 
-\item{path}{指定节假日设定文件}
+\item{withRaw}{跳过对 d 参数的预处理步骤，以便进一步优化性能}
 }
 \description{
-支持按照ID字段合并
+支持按照ID字段合并。
 }
