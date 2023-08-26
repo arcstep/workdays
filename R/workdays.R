@@ -15,44 +15,35 @@ distinct0 <- function(d, columns) {
 #' @param toIgnore 计算工作日时忽略结束列
 #' @param path 指定节假日设定文件
 #' @export
-workdays_seq <- function(d, fromColumn, toColumn, idColumn = NULL,
-                         fromIgnore = TRUE, toIgnore = TRUE, path = NULL, withRaw = FALSE) {
-  if(withRaw) {
-    d0 <- d
-  } else {
-    d0 <- d |>
-      mutate(`@from` = lubridate::as_date(!!dplyr::sym(fromColumn))) |>
-      mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn))) |>
-      filter(!is.na(`@from`) & !is.na(`@to`))
-  }
+workdays_seq <- function(d, fromColumn, toColumn, idColumn, fromIgnore = TRUE, toIgnore = TRUE, path = NULL) {
+  d0 <- d |>
+    mutate(`@from` = lubridate::as_date(!!dplyr::sym(fromColumn))) |>
+    mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn))) |>
+    filter(!is.na(`@from`) & !is.na(`@to`))
+  withIdFromTo <-  d0 |> distinct0(c("@from", "@to", idColumn))
+  workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore, path) |>
+    right_join(withIdFromTo, by = c("@from", "@to"))
+}
+
+##
+workdays_seq0 <- function(d, fromColumn, toColumn, fromIgnore = TRUE, toIgnore = TRUE, path = NULL) {
   ##
-  if(fromIgnore || toIgnore) {
-    days1 <- d0
-    # days1 <- d0 |> filter(`@from` < `@to`)
-  } else {
-    days1 <- d0
-  }
-  ##
-  fromDay <- (days1 |> arrange(`@from`))$`@from`[[1]]
-  toDay <- (days1 |> arrange(desc(`@to`)))$`@to`[[1]]
+  fromDay <- (d |> arrange(`@from`))$`@from`[[1]]
+  toDay <- (d |> arrange(desc(`@to`)))$`@to`[[1]]
   wd <- workdays_zh_CN(fromDay, toDay, path) |> filter(工作日标记)
-  resp <- days1 |>
-    distinct0(c("@from", "@to", idColumn)) |>
+  resp <- d |>
+    distinct(`@from`, `@to`) |>
     mutate(`@seq` = purrr::map2(`@from`, `@to`, ~ .x:.y |> lubridate::as_date())) |>
     tidyr::unnest(cols = c(`@seq`)) |>
     semi_join(wd, by = c("@seq"="日期"))
   ##
   if(fromIgnore) {
-    dFrom <- resp$`@seq` != resp$`@from`
-  } else {
-    dFrom <- TRUE
+    resp <- resp |> filter(`@seq` != `@from`)
   }
   if(toIgnore) {
-    dTo <- resp$`@seq` != resp$`@to`
-  } else {
-    dTo <- TRUE
+    resp <- resp |> filter(`@seq` != `@to`)
   }
-  resp |> filter(dFrom & dTo)
+  resp
 }
 
 #' @title 计算时间段内包含的工作日数量
@@ -68,7 +59,7 @@ workdays_seq <- function(d, fromColumn, toColumn, idColumn = NULL,
 #' @param toIgnore 计算工作日时忽略结束列
 #' @param path 指定节假日设定文件
 #' @export
-workdays_count <- function(d, fromColumn, toColumn, idColumn = NULL, newName = "工作日数",
+workdays_count <- function(d, fromColumn, toColumn, idColumn = NULL, seqIgnore = NULL, newName = "工作日数",
                            fromIgnore = FALSE, toIgnore = FALSE, path = NULL, withRaw = FALSE) {
   if(withRaw) {
     d0 <- d
@@ -78,21 +69,33 @@ workdays_count <- function(d, fromColumn, toColumn, idColumn = NULL, newName = "
       mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn))) |>
       filter(!is.na(`@from`) & !is.na(`@to`))
   }
+  ##
   if(is.null(idColumn)) {
     resp <- d0 |>
       left_join(
-        workdays_seq(d0, fromColumn, toColumn, idColumn, fromIgnore, toIgnore, path, withRaw = TRUE) |>
+        workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore, path) |>
           count(`@from`, `@to`, name = "@n"),
         by = c("@from", "@to")) |>
       select(-`@from`, -`@to`)
   } else {
-    resp <- workdays_seq(d0, fromColumn, toColumn, idColumn, fromIgnore, toIgnore) |>
-      distinct0(c(idColumn, "@seq")) |>
-      count(!!dplyr::sym(idColumn), name = "@n")
+    ##
+    withIdFromTo <-  d0 |> distinct0(c("@from", "@to", idColumn))
+    ##
+    if(is.null(seqIgnore)) {
+      resp <- workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore) |>
+        right_join(withIdFromTo, by = c("@from", "@to")) |>
+        distinct0(c(idColumn, "@seq")) |>
+        count(!!dplyr::sym(idColumn), name = "@n")
+    } else {
+      resp <- workdays_seq0(d0, fromColumn, toColumn, fromIgnore, toIgnore) |>
+        right_join(withIdFromTo, by = c("@from", "@to")) |>
+        distinct0(c(idColumn, "@seq")) |>
+        anti_join(seqIgnore, by = c(idColumn, "@seq")) |>
+        count(!!dplyr::sym(idColumn), name = "@n")
+    }
   }
   resp |>
     tidyr::replace_na(list("@n" = 0L)) |>
     rename(!!dplyr::sym(newName) := `@n`)
 }
-
 

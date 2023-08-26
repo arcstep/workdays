@@ -9,6 +9,7 @@ workdays_count(
   fromColumn,
   toColumn,
   idColumn = NULL,
+  seqIgnore = NULL,
   newName = "工作日数",
   fromIgnore = FALSE,
   toIgnore = FALSE,

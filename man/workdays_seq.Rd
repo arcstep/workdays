@@ -8,11 +8,10 @@ workdays_seq(
   d,
   fromColumn,
   toColumn,
-  idColumn = NULL,
+  idColumn,
   fromIgnore = TRUE,
   toIgnore = TRUE,
-  path = NULL,
-  withRaw = FALSE
+  path = NULL
 )
 }
 \arguments{
