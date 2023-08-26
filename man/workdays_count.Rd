@@ -10,9 +10,10 @@ workdays_count(
   toColumn,
   idColumn = NULL,
   newName = "工作日数",
-  fromIgnore = TRUE,
-  toIgnore = TRUE,
-  path = NULL
+  fromIgnore = FALSE,
+  toIgnore = FALSE,
+  path = NULL,
+  withRaw = FALSE
 )
 }
 \arguments{

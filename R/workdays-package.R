@@ -4,6 +4,7 @@
 ## usethis namespace: start
 #' @importFrom dplyr add_count
 #' @importFrom dplyr anti_join
+#' @importFrom dplyr arrange
 #' @importFrom dplyr count
 #' @importFrom dplyr distinct
 #' @importFrom dplyr filter

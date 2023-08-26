@@ -118,8 +118,5 @@ workdays_zh_CN_marker <- function(fromDay, toDay, path) {
 #' @export
 workdays_zh_CN <- function(fromDay = "2023-01-01", toDay = "2023-12-31", path = NULL) {
   workdays_zh_CN_marker(fromDay, toDay, path) |>
-    mutate("flag_day" = ifelse(workday, 1L, 0L)) |>
-    mutate("累计工作日数" = cumsum(flag_day)) |>
-    select(-flag_day) |>
     rename(日期 = day, 工作日标记 = workday)
 }

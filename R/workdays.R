@@ -15,16 +15,28 @@ distinct0 <- function(d, columns) {
 #' @param toIgnore 计算工作日时忽略结束列
 #' @param path 指定节假日设定文件
 #' @export
-workdays_seq <- function(d, fromColumn, toColumn, idColumn = NULL, fromIgnore = TRUE, toIgnore = TRUE, path = NULL) {
-  d0 <- d |>
-    mutate(`@from` = lubridate::as_date(!!dplyr::sym(fromColumn))) |>
-    mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn)))
+workdays_seq <- function(d, fromColumn, toColumn, idColumn = NULL,
+                         fromIgnore = TRUE, toIgnore = TRUE, path = NULL, withRaw = FALSE) {
+  if(withRaw) {
+    d0 <- d
+  } else {
+    d0 <- d |>
+      mutate(`@from` = lubridate::as_date(!!dplyr::sym(fromColumn))) |>
+      mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn))) |>
+      filter(!is.na(`@from`) & !is.na(`@to`))
+  }
   ##
-  fromDay <- d0$`@from` |> purrr::discard(~ is.na(.x)) |> min()
-  toDay <- d0$`@to` |> purrr::discard(~ is.na(.x)) |> max()
+  if(fromIgnore || toIgnore) {
+    days1 <- d0
+    # days1 <- d0 |> filter(`@from` < `@to`)
+  } else {
+    days1 <- d0
+  }
+  ##
+  fromDay <- (days1 |> arrange(`@from`))$`@from`[[1]]
+  toDay <- (days1 |> arrange(desc(`@to`)))$`@to`[[1]]
   wd <- workdays_zh_CN(fromDay, toDay, path) |> filter(工作日标记)
-  resp <- d0 |>
-    filter(!is.na(`@from`) & !is.na(`@to`)) |>
+  resp <- days1 |>
     distinct0(c("@from", "@to", idColumn)) |>
     mutate(`@seq` = purrr::map2(`@from`, `@to`, ~ .x:.y |> lubridate::as_date())) |>
     tidyr::unnest(cols = c(`@seq`)) |>
@@ -56,14 +68,20 @@ workdays_seq <- function(d, fromColumn, toColumn, idColumn = NULL, fromIgnore = 
 #' @param toIgnore 计算工作日时忽略结束列
 #' @param path 指定节假日设定文件
 #' @export
-workdays_count <- function(d, fromColumn, toColumn, idColumn = NULL, newName = "工作日数", fromIgnore = TRUE, toIgnore = TRUE, path = NULL) {
-  d0 <- d |>
-    mutate(`@from` = lubridate::as_date(!!dplyr::sym(fromColumn))) |>
-    mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn)))
+workdays_count <- function(d, fromColumn, toColumn, idColumn = NULL, newName = "工作日数",
+                           fromIgnore = FALSE, toIgnore = FALSE, path = NULL, withRaw = FALSE) {
+  if(withRaw) {
+    d0 <- d
+  } else {
+    d0 <- d |>
+      mutate(`@from` = lubridate::as_date(!!dplyr::sym(fromColumn))) |>
+      mutate(`@to` = lubridate::as_date(!!dplyr::sym(toColumn))) |>
+      filter(!is.na(`@from`) & !is.na(`@to`))
+  }
   if(is.null(idColumn)) {
     resp <- d0 |>
       left_join(
-        workdays_seq(d0, fromColumn, toColumn, idColumn, fromIgnore, toIgnore, path) |>
+        workdays_seq(d0, fromColumn, toColumn, idColumn, fromIgnore, toIgnore, path, withRaw = TRUE) |>
           count(`@from`, `@to`, name = "@n"),
         by = c("@from", "@to")) |>
       select(-`@from`, -`@to`)

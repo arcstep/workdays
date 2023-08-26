@@ -11,7 +11,8 @@ workdays_seq(
   idColumn = NULL,
   fromIgnore = TRUE,
   toIgnore = TRUE,
-  path = NULL
+  path = NULL,
+  withRaw = FALSE
 )
 }
 \arguments{
