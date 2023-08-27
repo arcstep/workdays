@@ -1,6 +1,6 @@
 Package: workdays
 Title: count workdays before two date columns
-Version: 0.1.0.9000
+Version: 0.2.0.9000
 Authors@R: 
     person("hongwei", "xue", , "43801@qq.com", role = c("aut", "cre"))
 Description: count workdays before two date columns.
