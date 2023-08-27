@@ -24,7 +24,7 @@ workday_assign <- function(from, to = from) {
 #' 节假日定义，补充定义周六、周日之外的节假日调整和周一至周五之外的工作日调整。
 #' 
 #' @export
-yaml_list <- function() {
+workdays_list <- function() {
   list(
     "2018年度" = list(
       "元旦" = list(
@@ -238,14 +238,14 @@ yaml_list <- function() {
 
 #' @title 打印默认的节假日调整清单
 #' @export
-yaml_cat <- function() {
-  yaml_list() |> yaml::as.yaml() |> cat()
+workdays_cat <- function() {
+  workdays_list() |> yaml::as.yaml() |> cat()
 }
 
 #' @title 导出默认的节假日调整清单
 #' @export
-yaml_write <- function(path = "./") {
-  yaml_list() |> yaml::write_yaml(path)
+workdays_write <- function(path = "./") {
+  workdays_list() |> yaml::write_yaml(path)
 }
 
 #' @title 补充节假日定义
@@ -255,9 +255,9 @@ yaml_write <- function(path = "./") {
 #' 使用该函数不会影响默认或已补充过的节假日定义。
 #' 
 #' @export
-yaml_patch <- function(path = NULL) {
+workdays_patch <- function(path = NULL) {
   if(is.null(path)) {
-    all <- yaml_list()
+    all <- workdays_list()
   } else {
     all <- yaml::read_yaml(path)
   }

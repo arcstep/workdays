@@ -1,3 +1,3 @@
 .onLoad <- function(libname, pkgname) {
-  yaml_patch(NULL)
+  workdays_patch(NULL)
 }
